@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "Solutions for advent of code 2022, got a late start so we shall see...",
   "scripts": {
-    "start": "nodemon -e ts --exec \"ts-node $1\""
+    "start": "nodemon -e ts --exec \"ts-node $1\"",
+    "create": "ts-node src/create.ts"
   },
   "repository": {
     "type": "git",
