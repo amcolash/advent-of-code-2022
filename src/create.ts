@@ -12,4 +12,5 @@ if (!existsSync(dir)) mkdirSync(dir);
 cpSync(template, join(dir, 'part1.ts'));
 cpSync(template, join(dir, 'part2.ts'));
 
+writeFileSync(join(dir, 'sample.txt'), '');
 writeFileSync(join(dir, 'input.txt'), '');
