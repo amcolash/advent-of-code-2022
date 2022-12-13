@@ -1,19 +1,19 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-const data = readFileSync(join(__dirname, 'input.txt')).toString();
+const data = readFileSync(join(__dirname, 'sample.txt')).toString();
 const lines = data.split('\n');
 
 interface Monkey {
   id: number;
-  items: number[];
+  items: bigint[];
   operation: {
     operand: '*' | '+';
-    value: number | 'old';
+    value: bigint | 'old';
   };
   test: {
     operand: '/';
-    value: number;
+    value: bigint;
     t: number;
     f: number;
   };
@@ -21,7 +21,8 @@ interface Monkey {
 }
 
 const monkeys: Monkey[] = [];
-const rounds = 20;
+const rounds = 10000;
+const debugRounds = [1, 20, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000];
 
 function parseMonkeys() {
   let current: any = {}; // until all set
@@ -35,7 +36,7 @@ function parseMonkeys() {
 
     if (l.includes('Starting')) {
       const items = [...l.matchAll(/\d+/g)];
-      current.items = items.map((i) => Number.parseInt(i[0]));
+      current.items = items.map((i) => BigInt(i[0]));
     }
 
     if (l.includes('Operation')) {
@@ -47,7 +48,7 @@ function parseMonkeys() {
       if (l.endsWith('old')) current.operation.value = 'old';
 
       const endMatch = l.match(/\d+$/);
-      if (endMatch) current.operation.value = Number.parseInt(endMatch[0]);
+      if (endMatch) current.operation.value = BigInt(endMatch[0]);
     }
 
     if (l.includes('Test')) {
@@ -56,7 +57,7 @@ function parseMonkeys() {
       if (l.includes('divisible')) current.test.operand = '/';
 
       const endMatch = l.match(/\d+$/);
-      if (endMatch) current.test.value = Number.parseInt(endMatch[0]);
+      if (endMatch) current.test.value = BigInt(endMatch[0]);
     }
 
     if (l.includes('true')) {
@@ -80,34 +81,55 @@ function parseMonkeys() {
   console.log(monkeys);
 }
 
-parseMonkeys();
+function runSimulation() {
+  for (let i = 1; i <= rounds; i++) {
+    // console.log('-- Round', i, '--');
 
-for (let i = 0; i < rounds; i++) {
-  monkeys.forEach((m) => {
-    if (!m.inspected) m.inspected = 0;
+    monkeys.forEach((m) => {
+      // console.log('Monkey', m.id);
 
-    while (m.items.length > 0) {
-      const item = m.items.shift();
+      if (!m.inspected) m.inspected = 0;
 
-      if (item) {
-        let worry = item;
+      while (m.items.length > 0) {
+        const item = m.items.shift();
 
-        const val = m.operation.value === 'old' ? worry : m.operation.value;
-        if (m.operation.operand === '*') worry *= val;
-        else worry += val;
+        if (item) {
+          let worry = item;
 
-        worry = Math.floor(worry / 3);
+          const val = m.operation.value === 'old' ? worry : m.operation.value;
+          if (m.operation.operand === '*') worry = worry * val;
+          else worry += val;
 
-        if (worry % m.test.value === 0) monkeys[m.test.t].items.push(worry);
-        else monkeys[m.test.f].items.push(worry);
+          let test = worry % m.test.value === 0n;
+          if (test) monkeys[m.test.t].items.push(worry);
+          else monkeys[m.test.f].items.push(worry);
 
-        m.inspected++;
+          // if ((test && m.test.t === 2) || (!test && m.test.f === 2))
+          //   console.log('Item', { item, val, worry, test, new: worry % m.test.value, newId: test ? m.test.t : m.test.f });
+
+          m.inspected++;
+        }
       }
-    }
-  });
+    });
+
+    // if (i === 0) printMonkeys(0);
+    console.log(i);
+    if (debugRounds.includes(i)) printMonkeys(i);
+  }
 }
 
-console.log(monkeys);
+function printMonkeys(round: number) {
+  console.log(
+    round,
+    monkeys.map((m) => {
+      return { id: m.id, inspected: m.inspected };
+    })
+  );
+}
+
+parseMonkeys();
+runSimulation();
+// printMonkeys(rounds);
 
 monkeys.sort((a, b) => b.inspected - a.inspected);
 console.log(monkeys[0].inspected * monkeys[1].inspected);
