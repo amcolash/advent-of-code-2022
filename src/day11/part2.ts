@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-const data = readFileSync(join(__dirname, 'sample.txt')).toString();
+const data = readFileSync(join(__dirname, 'input.txt')).toString();
 const lines = data.split('\n');
 
 interface Monkey {
@@ -24,6 +24,11 @@ const monkeys: Monkey[] = [];
 const rounds = 10000;
 const debugRounds = [1, 20, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000];
 
+// The number to divide everything by to make things small enough.
+// Didn't figure this out on my own - had to look online for help:
+// https://chasingdings.com/2022/12/11/advent-of-code-day-11-monkey-in-the-middle/
+let magicMod = 1;
+
 function parseMonkeys() {
   let current: any = {}; // until all set
 
@@ -35,7 +40,7 @@ function parseMonkeys() {
     }
 
     if (l.includes('Starting')) {
-      const items = [...l.matchAll(/\d+/g)];
+      const items = [...Array.from(l.matchAll(/\d+/g))];
       current.items = items.map((i) => BigInt(i[0]));
     }
 
@@ -57,7 +62,10 @@ function parseMonkeys() {
       if (l.includes('divisible')) current.test.operand = '/';
 
       const endMatch = l.match(/\d+$/);
-      if (endMatch) current.test.value = BigInt(endMatch[0]);
+      if (endMatch) {
+        current.test.value = BigInt(endMatch[0]);
+        magicMod *= Number.parseInt(endMatch[0]);
+      }
     }
 
     if (l.includes('true')) {
@@ -100,7 +108,10 @@ function runSimulation() {
           if (m.operation.operand === '*') worry = worry * val;
           else worry += val;
 
+          worry = worry % BigInt(magicMod);
+
           let test = worry % m.test.value === 0n;
+
           if (test) monkeys[m.test.t].items.push(worry);
           else monkeys[m.test.f].items.push(worry);
 
@@ -113,7 +124,7 @@ function runSimulation() {
     });
 
     // if (i === 0) printMonkeys(0);
-    console.log(i);
+    // console.log(i);
     if (debugRounds.includes(i)) printMonkeys(i);
   }
 }
